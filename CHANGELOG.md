@@ -36,6 +36,12 @@
   hopefully mitigate race conditions where Bubo is starting up and hasn't yet
   determined the state of the room.
 
+### Removed
+
+* Removed any attempts to maintain room encryption for old rooms on startup. This code
+  seems to have been broken and seems like a footgun waiting to happen. It should
+  be replaced with a manual "encrypt room" command if needed.
+
 ## v0.3.0 - 2022-01-23
 
 ### Added
