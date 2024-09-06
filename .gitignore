@@ -22,3 +22,5 @@ config.yaml
 *.log
 
 store/
+
+.venv/

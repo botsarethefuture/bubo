@@ -4,16 +4,36 @@ import re
 import time
 
 from email_validator import validate_email, EmailNotValidError
+
 # noinspection PyPackageRequirements
-from nio import RoomPutStateError, RoomGetStateEventError, RoomPutStateResponse, ProtocolError
+from nio import (
+    RoomPutStateError,
+    RoomGetStateEventError,
+    RoomPutStateResponse,
+    ProtocolError,
+)
+
 # noinspection PyPackageRequirements
 from nio.schemas import check_user_id
 
 from bubo import help_strings
 from bubo.chat_functions import send_text_to_room, invite_to_room
 from bubo.communities import ensure_community_exists
-from bubo.rooms import ensure_room_exists, create_breakout_room, set_user_power, get_room_power_levels, recreate_room
-from bubo.users import list_users, get_user_by_attr, create_user, send_password_reset, invite_user, create_signup_link
+from bubo.rooms import (
+    ensure_room_exists,
+    create_breakout_room,
+    set_user_power,
+    get_room_power_levels,
+    recreate_room,
+)
+from bubo.users import (
+    list_users,
+    get_user_by_attr,
+    create_user,
+    send_password_reset,
+    invite_user,
+    create_signup_link,
+)
 from bubo.utils import get_users_for_access, with_ratelimit, ensure_room_id
 
 logger = logging.getLogger(__name__)
@@ -69,7 +89,9 @@ class Command(object):
         return True
 
     async def _ensure_coordinator(self) -> bool:
-        allowed_users = await get_users_for_access(self.client, self.config, "coordinators")
+        allowed_users = await get_users_for_access(
+            self.client, self.config, "coordinators"
+        )
         if self.event.sender not in allowed_users:
             await send_text_to_room(
                 self.client,
@@ -102,23 +124,25 @@ class Command(object):
 
     async def _breakout(self):
         """Create a breakout room"""
-        help_text = "Creates a breakout room. Usage:\n" \
-                    "\n" \
-                    "breakout TOPIC\n" \
-                    "\n" \
-                    "For example:\n" \
-                    "\n" \
-                    "breakout Bot's are cool\n" \
-                    "\n" \
-                    "Any remaining text after the `breakout` command will be used as the name of the room. " \
-                    "The user requesting the breakout room will be automatically invited to the new room " \
-                    "and made admin. " \
-                    "Other users can react to the bot response message with any emoji reaction to " \
-                    "get invited to the room."
+        help_text = (
+            "Creates a breakout room. Usage:\n"
+            "\n"
+            "breakout TOPIC\n"
+            "\n"
+            "For example:\n"
+            "\n"
+            "breakout Bot's are cool\n"
+            "\n"
+            "Any remaining text after the `breakout` command will be used as the name of the room. "
+            "The user requesting the breakout room will be automatically invited to the new room "
+            "and made admin. "
+            "Other users can react to the bot response message with any emoji reaction to "
+            "get invited to the room."
+        )
         if not self.args or self.args[0] == "help":
             await send_text_to_room(self.client, self.room.room_id, help_text)
         elif self.args:
-            name = ' '.join(self.args)
+            name = " ".join(self.args)
             logger.debug(f"Breakout room name: '{name}'")
             room_id = await create_breakout_room(
                 name=name,
@@ -131,8 +155,10 @@ class Command(object):
             if event_id:
                 self.store.store_breakout_room(event_id, room_id)
             else:
-                text = "*Error: failed to store breakout room data. The room was created, " \
-                       "but invites via reactions will not work.*"
+                text = (
+                    "*Error: failed to store breakout room data. The room was created, "
+                    "but invites via reactions will not work.*"
+                )
                 await send_text_to_room(self.client, self.room.room_id, text)
 
     async def _communities(self):
@@ -144,51 +170,63 @@ class Command(object):
                 # Create a community
                 # Figure out the actual parameters
                 args = self.args[1:]
-                params = csv.reader([' '.join(args)], delimiter=" ")
+                params = csv.reader([" ".join(args)], delimiter=" ")
                 params = [param for param in params][0]
                 if len(params) != 3 or params[0] == "help":
-                    text = "NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n" \
-                           "\n" \
-                           "Wrong number of arguments. Usage:\n" \
-                           "\n" \
-                           "`communities create NAME ALIAS TITLE`\n" \
-                           "\n" \
-                           "For example:\n" \
-                           "\n" \
-                           "communities create \"My epic community\" epic-community \"The best community ever!\"\n" \
-                           "\n" \
-                           "Note, ALIAS should only contain lower case ascii characters and dashes (maybe)."
+                    text = (
+                        "NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n"
+                        "\n"
+                        "Wrong number of arguments. Usage:\n"
+                        "\n"
+                        "`communities create NAME ALIAS TITLE`\n"
+                        "\n"
+                        "For example:\n"
+                        "\n"
+                        'communities create "My epic community" epic-community "The best community ever!"\n'
+                        "\n"
+                        "Note, ALIAS should only contain lower case ascii characters and dashes (maybe)."
+                    )
                 else:
                     result, error = await ensure_community_exists(
                         (None, params[0], params[1], params[2], None, None),
                         self.config,
                     )
                     if result == "created":
-                        text = f"NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n" \
-                               f"\n" \
-                               f"Community {params[0]} (+{params[1]}:{self.config.server_name}) " \
-                               f"created successfully."
+                        text = (
+                            f"NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n"
+                            f"\n"
+                            f"Community {params[0]} (+{params[1]}:{self.config.server_name}) "
+                            f"created successfully."
+                        )
                         self.store.store_community(params[0], params[1], params[2])
                     elif result == "exists":
-                        text = f"NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n" \
-                               f"\n" \
-                               f"Sorry! Community {params[0]} (+{params[1]}:{self.config.server_name}) " \
-                               f"already exists."
+                        text = (
+                            f"NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n"
+                            f"\n"
+                            f"Sorry! Community {params[0]} (+{params[1]}:{self.config.server_name}) "
+                            f"already exists."
+                        )
                     else:
                         text = f"Error creating community: {error}"
             else:
                 text = "Unknown subcommand!"
         else:
-            text = "NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n" \
-                   "\n" \
-                   "I currently maintain the following communities:\n\n"
-            results = self.store.cursor.execute("""
+            text = (
+                "NOTE! Communities support is deprecated and will be removed in Bubo v0.4.0.\n"
+                "\n"
+                "I currently maintain the following communities:\n\n"
+            )
+            results = self.store.cursor.execute(
+                """
                 select * from communities
-            """)
+            """
+            )
             communities = []
             dbresult = results.fetchall()
             for community in dbresult:
-                communities.append(f"* {community[1]} / +{community[2]}:{self.config.server_name} / {community[3]}\n")
+                communities.append(
+                    f"* {community[1]} / +{community[2]}:{self.config.server_name} / {community[3]}\n"
+                )
             text += "".join(communities)
         await send_text_to_room(self.client, self.room.room_id, text)
 
@@ -197,7 +235,9 @@ class Command(object):
         if not await self._ensure_coordinator():
             return
         if not self.args or self.args[0] == "help":
-            await send_text_to_room(self.client, self.room.room_id, help_strings.HELP_INVITE)
+            await send_text_to_room(
+                self.client, self.room.room_id, help_strings.HELP_INVITE
+            )
             return
 
         try:
@@ -216,7 +256,13 @@ class Command(object):
             )
         else:
             if len(self.args) == 1:
-                await invite_to_room(self.client, room_id, self.event.sender, self.room.room_id, self.args[0])
+                await invite_to_room(
+                    self.client,
+                    room_id,
+                    self.event.sender,
+                    self.room.room_id,
+                    self.args[0],
+                )
                 return
             else:
                 for counter, user_id in enumerate(self.args, 1):
@@ -232,7 +278,13 @@ class Command(object):
                             f"Invalid user mxid: {user_id}",
                         )
                     else:
-                        await invite_to_room(self.client, room_id, user_id, self.room.room_id, self.args[0])
+                        await invite_to_room(
+                            self.client,
+                            room_id,
+                            user_id,
+                            self.room.room_id,
+                            self.args[0],
+                        )
                 return
 
     async def _power(self):
@@ -278,8 +330,12 @@ class Command(object):
                             "admin": 100,
                             "moderator": 50,
                         }.get(level)
-                        response = await set_user_power(room_id, user_id, self.client, power)
-                        if isinstance(response, (RoomPutStateError, RoomGetStateEventError)):
+                        response = await set_user_power(
+                            room_id, user_id, self.client, power
+                        )
+                        if isinstance(
+                            response, (RoomPutStateError, RoomGetStateEventError)
+                        ):
                             text = f"Sorry, command failed.\n\n{response.message}"
                         elif isinstance(response, RoomPutStateResponse):
                             text = f"Power level was successfully set as requested."
@@ -289,7 +345,9 @@ class Command(object):
                             else:
                                 text = f"Failed to set power level - error code {response}."
                         else:
-                            logger.warning(f"Got unexpected set_user_power response: {response}")
+                            logger.warning(
+                                f"Got unexpected set_user_power response: {response}"
+                            )
                             text = f"Unknown power level response, please consult the logs."
 
         await send_text_to_room(self.client, self.room.room_id, text)
@@ -303,32 +361,51 @@ class Command(object):
         if not await self._ensure_coordinator():
             return
         text = None
-        type_text = 'Space' if space else 'Room'
+        type_text = "Space" if space else "Room"
         if self.args:
             if self.args[0] == "create":
                 # Create a room or space
                 # Figure out the actual parameters
                 args = self.args[1:]
-                params = csv.reader([' '.join(args)], delimiter=" ")
+                params = csv.reader([" ".join(args)], delimiter=" ")
                 params = [param for param in params][0]
-                if len(params) != 5 or params[3] not in ('yes', 'no') or params[3] not in ('yes', 'no') \
-                        or params[0] == "help":
-                    text = f"Wrong number or bad arguments. " \
-                           f"Usage:\n\n{help_strings.HELP_SPACES if space else help_strings.HELP_ROOMS}"
+                if (
+                    len(params) != 5
+                    or params[3] not in ("yes", "no")
+                    or params[3] not in ("yes", "no")
+                    or params[0] == "help"
+                ):
+                    text = (
+                        f"Wrong number or bad arguments. "
+                        f"Usage:\n\n{help_strings.HELP_SPACES if space else help_strings.HELP_ROOMS}"
+                    )
                 else:
                     result, error = await ensure_room_exists(
-                        (None, params[0], params[1], None, params[2], None, True if params[3] == "yes" else False,
-                         True if params[4] == "yes" else False, "space" if space else ""),
+                        (
+                            None,
+                            params[0],
+                            params[1],
+                            None,
+                            params[2],
+                            None,
+                            True if params[3] == "yes" else False,
+                            True if params[4] == "yes" else False,
+                            "space" if space else "",
+                        ),
                         self.client,
                         self.store,
                         self.config,
                     )
                     if result == "created":
-                        text = f"{type_text} {params[0]} (#{params[1]}:{self.config.server_name}) " \
-                               f"created successfully."
+                        text = (
+                            f"{type_text} {params[0]} (#{params[1]}:{self.config.server_name}) "
+                            f"created successfully."
+                        )
                     elif result == "exists":
-                        text = f"Sorry! {type_text} {params[0]} (#{params[1]}:{self.config.server_name}) " \
-                               f"already exists."
+                        text = (
+                            f"Sorry! {type_text} {params[0]} (#{params[1]}:{self.config.server_name}) "
+                            f"already exists."
+                        )
                     else:
                         text = f"Error creating {type_text}: {error}"
             elif self.args[0] == "help":
@@ -337,11 +414,13 @@ class Command(object):
                 text = await self._list_rooms(spaces=space)
             elif self.args[0] == "list-no-admin":
                 text = await self._list_no_admin_rooms(spaces=space)
-            elif self.args[0] == 'recreate':
-                return await self._recreate_room(subcommand=self.args[1] if len(self.args) > 1 else None)
-            elif self.args[0] == 'unlink':
+            elif self.args[0] == "recreate":
+                return await self._recreate_room(
+                    subcommand=self.args[1] if len(self.args) > 1 else None
+                )
+            elif self.args[0] == "unlink":
                 await self._unlink_room(leave=False)
-            elif self.args[0] == 'unlink-and-leave':
+            elif self.args[0] == "unlink-and-leave":
                 await self._unlink_room(leave=True)
             else:
                 text = "Unknown subcommand!"
@@ -358,25 +437,33 @@ class Command(object):
             _state, users = await get_room_power_levels(self.client, room["room_id"])
             if users and users.get(self.config.user_id, 0) < 100:
                 joined_members = await with_ratelimit(
-                    self.client, "joined_members", room_id=room["room_id"],
+                    self.client,
+                    "joined_members",
+                    room_id=room["room_id"],
                 )
                 user_count = getattr(joined_members, "members", None)
                 suffix = ""
                 admin_users = [user for user, power in users.items() if power == 100]
                 if len(admin_users):
                     suffix = f". **The {'space' if spaces else 'room'} has {len(admin_users)} other admins.**"
-                rooms_list.append(f"* {room['name']} / #{room['alias']}:{self.config.server_name} / "
-                                  f"{room['room_id']} / users: {len(user_count) if user_count else 'unknown'}"
-                                  f"{suffix}\n")
+                rooms_list.append(
+                    f"* {room['name']} / #{room['alias']}:{self.config.server_name} / "
+                    f"{room['room_id']} / users: {len(user_count) if user_count else 'unknown'}"
+                    f"{suffix}\n"
+                )
         text += "".join(rooms_list)
         return text
 
     async def _list_rooms(self, spaces: bool = False):
-        text = f"I currently maintain the following {'spaces' if spaces else 'rooms'}:\n\n"
+        text = (
+            f"I currently maintain the following {'spaces' if spaces else 'rooms'}:\n\n"
+        )
         rooms = self.store.get_rooms(spaces=spaces)
         rooms_list = []
         for room in rooms:
-            rooms_list.append(f"* {room['name']} / #{room['alias']}:{self.config.server_name} / {room['room_id']}\n")
+            rooms_list.append(
+                f"* {room['name']} / #{room['alias']}:{self.config.server_name} / {room['room_id']}\n"
+            )
         text += "".join(rooms_list)
         return text
 
@@ -392,42 +479,53 @@ class Command(object):
             if room:
                 if room["applied"] == 1:
                     return await send_text_to_room(
-                        self.client, self.room.room_id,
+                        self.client,
+                        self.room.room_id,
                         "Can only recreate a room once, this room has already been recreated.",
                     )
                 self.store.delete_recreate_room(self.room.room_id)
             self.store.store_recreate_room(self.event.sender, self.room.room_id)
             return await send_text_to_room(
-                self.client, self.room.room_id, help_strings.HELP_ROOMS_RECREATE_CONFIRM % self.config.command_prefix,
+                self.client,
+                self.room.room_id,
+                help_strings.HELP_ROOMS_RECREATE_CONFIRM % self.config.command_prefix,
             )
 
         if subcommand != "confirm":
             return await send_text_to_room(
-                self.client, self.room.room_id, f"Unknown subcommand. Usage:\n\n{help_strings.HELP_ROOMS_RECREATE}",
+                self.client,
+                self.room.room_id,
+                f"Unknown subcommand. Usage:\n\n{help_strings.HELP_ROOMS_RECREATE}",
             )
 
         room = self.store.get_recreate_room(self.room.room_id)
         if not room:
             return await send_text_to_room(
-                self.client, self.room.room_id,
+                self.client,
+                self.room.room_id,
                 "Cannot confirm room recreate before requesting room recreate.",
             )
         if room["requester"] != self.event.sender:
             return await send_text_to_room(
-                self.client, self.room.room_id,
+                self.client,
+                self.room.room_id,
                 "Room recreate confirm must be given by the room recreate requester.",
             )
         if int(time.time()) - room["timestamp"] > 60:
             return await send_text_to_room(
-                self.client, self.room.room_id,
+                self.client,
+                self.room.room_id,
                 "Room recreate confirmation must be given within 60 seconds. Please request recreation again.",
             )
 
         # OK confirmation over, let's do stuff
-        new_room_id = await recreate_room(self.room, self.client, self.config, self.store, self.event.event_id)
+        new_room_id = await recreate_room(
+            self.room, self.client, self.config, self.store, self.event.event_id
+        )
         if not new_room_id:
             return await send_text_to_room(
-                self.client, self.room.room_id,
+                self.client,
+                self.room.room_id,
                 f"Failed to create new room. Please see logs or contact support.",
             )
 
@@ -449,19 +547,25 @@ class Command(object):
 
         if len(self.args) < 2:
             return await send_text_to_room(
-                self.client, self.room.room_id, help_strings.HELP_ROOMS_UNLINK,
+                self.client,
+                self.room.room_id,
+                help_strings.HELP_ROOMS_UNLINK,
             )
         try:
             room_id = await ensure_room_id(self.client, self.args[1])
         except (KeyError, ProtocolError):
             return await send_text_to_room(
-                self.client, self.room.room_id, f"Error resolving room ID",
+                self.client,
+                self.room.room_id,
+                f"Error resolving room ID",
             )
 
         room = self.store.get_room(room_id)
         if not room:
             return await send_text_to_room(
-                self.client, self.room.room_id, f"Cannot unlink room {room_id} which doesn't seem tracked by Bubo",
+                self.client,
+                self.room.room_id,
+                f"Cannot unlink room {room_id} which doesn't seem tracked by Bubo",
             )
 
         self.store.unlink_room(room_id)
@@ -470,8 +574,10 @@ class Command(object):
             await self.client.room_leave(room_id)
 
         return await send_text_to_room(
-            self.client, self.room.room_id, f"Room {room_id} has been removed from Bubo database."
-                                            f"{' Bubo has also left the room' if leave else ''}",
+            self.client,
+            self.room.room_id,
+            f"Room {room_id} has been removed from Bubo database."
+            f"{' Bubo has also left the room' if leave else ''}",
         )
 
     async def _users(self):
@@ -479,7 +585,11 @@ class Command(object):
         Command to manage users.
         """
         if not self.config.keycloak.get("enabled"):
-            return await send_text_to_room(self.client, self.room.room_id, help_strings.HELP_USERS_KEYCLOAK_DISABLED)
+            return await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                help_strings.HELP_USERS_KEYCLOAK_DISABLED,
+            )
         text = None
         if self.args:
             if self.args[0] == "list":
@@ -507,29 +617,44 @@ class Command(object):
                             texts.append(f"The email {email} looks invalid: {ex}")
                             continue
                         try:
-                            existing_user = get_user_by_attr(self.config, "email", email)
+                            existing_user = get_user_by_attr(
+                                self.config, "email", email
+                            )
                         except Exception as ex:
-                            texts.append(f"Error looking up existing users by email {email}: {ex}")
+                            texts.append(
+                                f"Error looking up existing users by email {email}: {ex}"
+                            )
                             continue
                         if existing_user:
-                            texts.append(f"Found an existing user by email {email} - ignoring")
+                            texts.append(
+                                f"Found an existing user by email {email} - ignoring"
+                            )
                             continue
-                        logger.debug("users create - No existing user for %s found", email)
+                        logger.debug(
+                            "users create - No existing user for %s found", email
+                        )
                         username = None
-                        username_candidate = email.split('@')[0]
+                        username_candidate = email.split("@")[0]
                         username_candidate = username_candidate.lower()
-                        username_candidate = re.sub(r'[^a-z0-9._\-]', '', username_candidate)
+                        username_candidate = re.sub(
+                            r"[^a-z0-9._\-]", "", username_candidate
+                        )
                         candidate = username_candidate
                         counter = 0
                         while not username:
                             logger.debug("users create - candidate: %s", candidate)
                             # noinspection PyBroadException
                             try:
-                                existing_user = get_user_by_attr(self.config, "username", candidate)
+                                existing_user = get_user_by_attr(
+                                    self.config, "username", candidate
+                                )
                             except Exception:
                                 existing_user = True
                             if existing_user:
-                                logger.debug("users create - Found existing user with candidate %s", existing_user)
+                                logger.debug(
+                                    "users create - Found existing user with candidate %s",
+                                    existing_user,
+                                )
                                 counter += 1
                                 candidate = f"{username_candidate}{counter}"
                                 continue
@@ -539,21 +664,31 @@ class Command(object):
                         logger.debug("Created user: %s", user_id)
                         if not user_id:
                             texts.append(f"Failed to create user for email {email}")
-                            logger.warning("users create - Failed to create user for email %s", email)
+                            logger.warning(
+                                "users create - Failed to create user for email %s",
+                                email,
+                            )
                             continue
                         send_password_reset(self.config, user_id)
-                        logger.info("users create - Successfully create user with email %s", email)
+                        logger.info(
+                            "users create - Successfully create user with email %s",
+                            email,
+                        )
                         texts.append(f"Successfully create {email}!")
-                    text = '\n'.join(texts)
+                    text = "\n".join(texts)
             elif self.args[0] == "invite":
                 if not await self._ensure_coordinator():
                     return
                 if not self.config.keycloak_signup.get("enabled"):
                     return await send_text_to_room(
-                        self.client, self.room.room_id, help_strings.HELP_USERS_KEYCLOAK_SIGNUP_DISABLED,
+                        self.client,
+                        self.room.room_id,
+                        help_strings.HELP_USERS_KEYCLOAK_SIGNUP_DISABLED,
                     )
                 if len(self.args) == 1 or self.args[1] == "help":
-                    return await send_text_to_room(self.client, self.room.room_id, help_strings.HELP_USERS_INVITE)
+                    return await send_text_to_room(
+                        self.client, self.room.room_id, help_strings.HELP_USERS_INVITE
+                    )
                 emails = self.args[1:]
                 emails = {email.strip() for email in emails}
                 texts = []
@@ -569,38 +704,58 @@ class Command(object):
                     try:
                         invite_user(self.config, email, self.event.sender)
                     except Exception as ex:
-                        logger.error("users invite - error sending invite to user: %s", ex)
+                        logger.error(
+                            "users invite - error sending invite to user: %s", ex
+                        )
                         texts.append(f"Error inviting {email}, please see logs.")
                         continue
                     logger.debug("users invite - Invited user: %s", email)
                     texts.append(f"Successfully invited {email}!")
-                text = '\n'.join(texts)
+                text = "\n".join(texts)
             elif self.args[0] == "signuplink":
                 if not await self._ensure_coordinator():
                     return
                 if not self.config.keycloak_signup.get("enabled"):
                     return await send_text_to_room(
-                        self.client, self.room.room_id, help_strings.HELP_USERS_KEYCLOAK_SIGNUP_DISABLED,
+                        self.client,
+                        self.room.room_id,
+                        help_strings.HELP_USERS_KEYCLOAK_SIGNUP_DISABLED,
                     )
                 if len(self.args) < 3 or self.args[1] == "help":
-                    return await send_text_to_room(self.client, self.room.room_id, help_strings.HELP_USERS_SIGNUPLINK)
+                    return await send_text_to_room(
+                        self.client,
+                        self.room.room_id,
+                        help_strings.HELP_USERS_SIGNUPLINK,
+                    )
                 try:
                     max_signups = int(self.args[1])
                     days_valid = int(self.args[2])
                     if max_signups < 1 or days_valid < 1:
                         raise ValueError
                 except ValueError:
-                    return await send_text_to_room(self.client, self.room.room_id, help_strings.HELP_USERS_SIGNUPLINK)
+                    return await send_text_to_room(
+                        self.client,
+                        self.room.room_id,
+                        help_strings.HELP_USERS_SIGNUPLINK,
+                    )
                 # noinspection PyBroadException
                 try:
-                    signup_link = create_signup_link(self.config, self.event.sender, max_signups, days_valid)
+                    signup_link = create_signup_link(
+                        self.config, self.event.sender, max_signups, days_valid
+                    )
                 except Exception as ex:
                     logger.error("Failed to create signup link: %s", ex)
-                    text = "Error creating signup link. Please contact an administrator."
+                    text = (
+                        "Error creating signup link. Please contact an administrator."
+                    )
                 else:
-                    logger.info(f"Successfully created signup link requested by {self.event.sender}")
-                    text = f"Signup link created for {max_signups} signups with a validity of {days_valid} days. " \
-                           f"The link is {signup_link}"
+                    logger.info(
+                        f"Successfully created signup link requested by {self.event.sender}"
+                    )
+                    text = (
+                        f"Signup link created for {max_signups} signups with a validity of {days_valid} days. "
+                        f"The link is {signup_link}"
+                    )
         else:
             if not await self._ensure_admin():
                 return

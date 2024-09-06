@@ -9,7 +9,9 @@ from bubo.storage import Storage
 logger = logging.getLogger(__name__)
 
 
-async def ensure_community_exists(community: tuple, config: Config) -> Tuple[str, Optional[str]]:
+async def ensure_community_exists(
+    community: tuple, config: Config
+) -> Tuple[str, Optional[str]]:
     """
     Maintains a community.
     """
@@ -39,7 +41,7 @@ async def ensure_community_exists(community: tuple, config: Config) -> Tuple[str
                     "name": name,
                     "short_description": title,
                     "long_description": description,
-                }
+                },
             },
             headers=headers,
         )
@@ -57,9 +59,11 @@ async def maintain_configured_communities(store: Storage, config: Config):
     """
     logger.info("Starting maintaining of communities")
 
-    results = store.cursor.execute("""
+    results = store.cursor.execute(
+        """
         select * from communities
-    """)
+    """
+    )
 
     communities = results.fetchall()
     for community in communities:

@@ -39,4 +39,3 @@ class Message(object):
         """Say hello"""
         text = "Hello, world!"
         await send_text_to_room(self.client, self.room.room_id, text)
-

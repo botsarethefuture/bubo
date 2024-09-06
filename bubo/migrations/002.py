@@ -1,5 +1,6 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE rooms (
             id INTEGER PRIMARY KEY autoincrement,
             name text,
@@ -11,8 +12,10 @@ def forward(cursor):
             public integer,
             power_to_write integer default 0
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE TABLE communities (
             id INTEGER PRIMARY KEY autoincrement,
             name text,
@@ -21,13 +24,15 @@ def forward(cursor):
             icon text default '',
             description text default ''
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE TABLE community_rooms (
             id INTEGER PRIMARY KEY autoincrement,
             room_id integer,
             community_id integer,
             constraint room_community_unique_idx unique (room_id, community_id)
         )
-    """)
-
+    """
+    )

@@ -1,5 +1,7 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         ALTER TABLE rooms
             ADD type text default ''
-    """)
+    """
+    )
