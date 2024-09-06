@@ -5,23 +5,22 @@ from time import sleep
 
 import aiolog
 import asyncio
+
 # noinspection PyPackageRequirements
-from aiohttp import (
-    ServerDisconnectedError,
-    ClientConnectionError
-)
+from aiohttp import ServerDisconnectedError, ClientConnectionError
+
 # noinspection PyPackageRequirements
 from nio import (
     AsyncClient,
     AsyncClientConfig,
-    ForwardedRoomKeyEvent, 
+    ForwardedRoomKeyEvent,
     InviteMemberEvent,
     LocalProtocolError,
     LoginError,
     MegolmEvent,
     RoomKeyEvent,
     RoomMessageText,
-    UnknownEvent, 
+    UnknownEvent,
 )
 
 from bubo.callbacks import Callbacks
@@ -69,7 +68,9 @@ async def main(config: Config):
     # noinspection PyTypeChecker
     client.add_event_callback(callbacks.reaction, (UnknownEvent,))
     # noinspection PyTypeChecker
-    client.add_to_device_callback(callbacks.room_key, (ForwardedRoomKeyEvent, RoomKeyEvent))
+    client.add_to_device_callback(
+        callbacks.room_key, (ForwardedRoomKeyEvent, RoomKeyEvent)
+    )
 
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
@@ -94,7 +95,8 @@ async def main(config: Config):
                     logger.fatal(
                         "Failed to login. Have you installed the correct dependencies? "
                         "https://github.com/poljar/matrix-nio#installation "
-                        "Error: %s", e
+                        "Error: %s",
+                        e,
                     )
                     return False
 
@@ -123,6 +125,7 @@ async def main(config: Config):
             # Make sure to close the client connection on disconnect
             await client.close()
 
+
 # Read config file
 # A different config file path can be specified as the first command line argument
 if len(sys.argv) > 1:
@@ -133,4 +136,6 @@ config_file = Config(config_filepath)
 
 aiolog.start()
 
-asyncio.get_event_loop().run_until_complete(main(config_file)).run_util_complete(aiolog.stop())
+asyncio.get_event_loop().run_until_complete(main(config_file)).run_util_complete(
+    aiolog.stop()
+)

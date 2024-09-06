@@ -1,5 +1,6 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE encrypted_events (
             id INTEGER PRIMARY KEY autoincrement,
             device_id text,
@@ -8,7 +9,10 @@ def forward(cursor):
             session_id text,
             event text
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE INDEX encrypted_events_session_id_idx on encrypted_events (session_id);
-    """)
+    """
+    )

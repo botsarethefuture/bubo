@@ -1,5 +1,6 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE recreate_rooms (
             id INTEGER PRIMARY KEY autoincrement,
             requester text,
@@ -7,4 +8,5 @@ def forward(cursor):
             timestamp integer,
             applied integer default 0
         )
-    """)
+    """
+    )

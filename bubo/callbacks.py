@@ -2,13 +2,22 @@ import json
 from typing import Union
 
 # noinspection PyPackageRequirements
-from nio import JoinError, MatrixRoom, MegolmEvent, RoomKeyEvent, Event, RoomMessageText, UnknownEvent
+from nio import (
+    JoinError,
+    MatrixRoom,
+    MegolmEvent,
+    RoomKeyEvent,
+    Event,
+    RoomMessageText,
+    UnknownEvent,
+)
 
 from bubo.bot_commands import Command
 from bubo.chat_functions import send_text_to_room, invite_to_room
 from bubo.message_responses import Message
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +37,9 @@ class Callbacks(object):
         self.config = config
         self.command_prefix = config.command_prefix
 
-    async def decrypted_callback(self, room_id: str, event: Union[RoomMessageText, UnknownEvent]):
+    async def decrypted_callback(
+        self, room_id: str, event: Union[RoomMessageText, UnknownEvent]
+    ):
         if isinstance(event, RoomMessageText):
             await self.message(self.client.rooms[room_id], event)
         elif isinstance(event, UnknownEvent):
@@ -73,7 +84,7 @@ class Callbacks(object):
         # treat it as a command
         if has_command_prefix:
             # Remove the command prefix
-            msg = msg[len(self.command_prefix):]
+            msg = msg[len(self.command_prefix) :]
 
         command = Command(self.client, self.store, self.config, msg, room, event)
         await command.process()
@@ -96,17 +107,24 @@ class Callbacks(object):
         room_id = self.store.get_breakout_room_id(event_id)
         logger.debug(f"Breakout room query found room_id: {room_id}")
         if room_id:
-            logger.info(f"Found breakout room for reaction in {room.room_id} by {event.sender} - "
-                        f"inviting to {room_id}")
+            logger.info(
+                f"Found breakout room for reaction in {room.room_id} by {event.sender} - "
+                f"inviting to {room_id}"
+            )
             # Do an invite
             await invite_to_room(
-                self.client, room_id, event.sender,
+                self.client,
+                room_id,
+                event.sender,
             )
 
     async def room_key(self, event: RoomKeyEvent):
         """Callback for ToDevice events like room key events."""
         events = self.store.get_encrypted_events(event.session_id)
-        logger.debug("Got room key event for session %s, matched sessions: %s" % (event.session_id, len(events)))
+        logger.debug(
+            "Got room key event for session %s, matched sessions: %s"
+            % (event.session_id, len(events))
+        )
         if not events:
             return
 
@@ -118,16 +136,23 @@ class Callbacks(object):
                 params["transaction_id"] = event_dict["transaction_id"]
                 megolm_event = MegolmEvent.from_dict(params)
             except Exception as ex:
-                logger.warning("Failed to restore MegolmEvent for %s: %s" % (encrypted_event["event_id"], ex))
+                logger.warning(
+                    "Failed to restore MegolmEvent for %s: %s"
+                    % (encrypted_event["event_id"], ex)
+                )
                 continue
             try:
                 # noinspection PyTypeChecker
                 decrypted = self.client.decrypt_event(megolm_event)
             except Exception as ex:
-                logger.warning(f"Error decrypting event %s: %s" % (megolm_event.event_id, ex))
+                logger.warning(
+                    f"Error decrypting event %s: %s" % (megolm_event.event_id, ex)
+                )
                 continue
             if isinstance(decrypted, Event):
-                logger.info(f"Successfully decrypted stored event %s" % decrypted.event_id)
+                logger.info(
+                    f"Successfully decrypted stored event %s" % decrypted.event_id
+                )
                 parsed_event = Event.parse_event(decrypted.source)
                 logger.info(f"Parsed event: %s" % parsed_event)
                 self.store.remove_encrypted_event(decrypted.event_id)
@@ -146,7 +171,8 @@ class Callbacks(object):
             if type(result) == JoinError:
                 logger.error(
                     f"Error joining room {room.room_id} (attempt %d): %s",
-                    attempt, result.message,
+                    attempt,
+                    result.message,
                 )
             else:
                 break
@@ -169,7 +195,10 @@ class Callbacks(object):
             )
 
             await send_text_to_room(
-                self.client, room.room_id, user_msg, reply_to_event_id=event.event_id,
+                self.client,
+                room.room_id,
+                user_msg,
+                reply_to_event_id=event.event_id,
             )
 
         self.store.store_encrypted_event(event)

@@ -75,8 +75,12 @@ Subcommands:
   alias.
 """
 
-HELP_ROOMS = HELP_ROOMS_AND_SPACES.replace("%%TYPES%%", "rooms").replace("%%TYPE%%", "room")
-HELP_SPACES = HELP_ROOMS_AND_SPACES.replace("%%TYPES%%", "spaces").replace("%%TYPE%%", "space")
+HELP_ROOMS = HELP_ROOMS_AND_SPACES.replace("%%TYPES%%", "rooms").replace(
+    "%%TYPE%%", "room"
+)
+HELP_SPACES = HELP_ROOMS_AND_SPACES.replace("%%TYPES%%", "spaces").replace(
+    "%%TYPE%%", "space"
+)
 
 HELP_ROOMS_RECREATE = """Recreates a room.
 
@@ -125,10 +129,14 @@ Takes one or more email address as parameters. Creates a self-registration page 
 and sends the user a link to it.
 """
 
-HELP_USERS_KEYCLOAK_DISABLED = "The users command is not configured on this instance, sorry."
+HELP_USERS_KEYCLOAK_DISABLED = (
+    "The users command is not configured on this instance, sorry."
+)
 
-HELP_USERS_KEYCLOAK_SIGNUP_DISABLED = "The users invite and signup link commands are not configured " \
-                                      "on this instance, sorry."
+HELP_USERS_KEYCLOAK_SIGNUP_DISABLED = (
+    "The users invite and signup link commands are not configured "
+    "on this instance, sorry."
+)
 
 HELP_USERS_SIGNUPLINK = """Create a self-service signup link to send to new users.
 

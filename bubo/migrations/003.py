@@ -1,5 +1,6 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE rooms_backup (
             id INTEGER PRIMARY KEY,
             name text,
@@ -11,15 +12,21 @@ def forward(cursor):
             public integer,
             power_to_write integer default 0
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         INSERT INTO rooms_backup SELECT id, name, alias, room_id, title, icon, encrypted, public, power_to_write 
             FROM rooms
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         DROP TABLE rooms
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE TABLE rooms (
             id INTEGER PRIMARY KEY autoincrement,
             name text,
@@ -31,11 +38,16 @@ def forward(cursor):
             public integer,
             power_to_write integer default 0
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         INSERT INTO rooms SELECT id, name, alias, room_id, title, icon, encrypted, public, power_to_write 
             FROM rooms_backup
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         DROP TABLE rooms_backup
-    """)
+    """
+    )

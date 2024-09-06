@@ -6,6 +6,7 @@ import sys
 from typing import List, Any
 
 from aiolog import matrix
+
 # noinspection PyPackageRequirements
 from nio.schemas import RoomRegex, UserIdRegex
 
@@ -33,59 +34,87 @@ class Config(object):
             self.config = yaml.safe_load(file_stream.read())
 
         # Logging setup
-        formatter = logging.Formatter('%(asctime)s | %(name)s [%(levelname)s] %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s | %(name)s [%(levelname)s] %(message)s"
+        )
 
         log_level = self._get_cfg(["logging", "level"], default="INFO")
         logger.setLevel(log_level)
 
-        file_logging_enabled = self._get_cfg(["logging", "file_logging", "enabled"], default=False)
-        file_logging_filepath = self._get_cfg(["logging", "file_logging", "filepath"], default="bot.log")
+        file_logging_enabled = self._get_cfg(
+            ["logging", "file_logging", "enabled"], default=False
+        )
+        file_logging_filepath = self._get_cfg(
+            ["logging", "file_logging", "filepath"], default="bot.log"
+        )
         if file_logging_enabled:
             handler = logging.FileHandler(file_logging_filepath)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-        console_logging_enabled = self._get_cfg(["logging", "console_logging", "enabled"], default=True)
+        console_logging_enabled = self._get_cfg(
+            ["logging", "console_logging", "enabled"], default=True
+        )
         if console_logging_enabled:
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
         # Storage setup
-        self.database_filepath = self._get_cfg(["storage", "database_filepath"], required=True)
-        self.store_filepath = self._get_cfg(["storage", "store_filepath"], required=True)
+        self.database_filepath = self._get_cfg(
+            ["storage", "database_filepath"], required=True
+        )
+        self.store_filepath = self._get_cfg(
+            ["storage", "store_filepath"], required=True
+        )
 
         # Create the store folder if it doesn't exist
         if not os.path.isdir(self.store_filepath):
             if not os.path.exists(self.store_filepath):
                 os.mkdir(self.store_filepath)
             else:
-                raise ConfigError(f"storage.store_filepath '{self.store_filepath}' is not a directory")
+                raise ConfigError(
+                    f"storage.store_filepath '{self.store_filepath}' is not a directory"
+                )
 
         # Matrix bot account setup
         self.user_id = self._get_cfg(["matrix", "user_id"], required=True)
         if not re.match("@.*:.*", self.user_id):
             raise ConfigError("matrix.user_id must be in the form @name:domain")
 
-        self.user_token = self._get_cfg(["matrix", "user_token"], required=False, default="")
-        self.user_password = self._get_cfg(["matrix", "user_password"], required=False, default="")
+        self.user_token = self._get_cfg(
+            ["matrix", "user_token"], required=False, default=""
+        )
+        self.user_password = self._get_cfg(
+            ["matrix", "user_password"], required=False, default=""
+        )
         if not self.user_token and not self.user_password:
             raise ConfigError("Must supply either user token or password")
 
         self.device_id = self._get_cfg(["matrix", "device_id"], required=True)
-        self.device_name = self._get_cfg(["matrix", "device_name"], default="nio-template")
+        self.device_name = self._get_cfg(
+            ["matrix", "device_name"], default="nio-template"
+        )
         self.homeserver_url = self._get_cfg(["matrix", "homeserver_url"], required=True)
         self.server_name = self._get_cfg(["matrix", "server_name"], required=True)
-        self.is_synapse_admin = self._get_cfg(["matrix", "is_synapse_admin"], required=False, default=False)
+        self.is_synapse_admin = self._get_cfg(
+            ["matrix", "is_synapse_admin"], required=False, default=False
+        )
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
-        matrix_logging_enabled = self._get_cfg(["logging", "matrix_logging", "enabled"], default=False)
+        matrix_logging_enabled = self._get_cfg(
+            ["logging", "matrix_logging", "enabled"], default=False
+        )
         if matrix_logging_enabled:
             if not self.user_token:
-                logger.warning("Not setting up Matrix logging - requires user access token to be set")
+                logger.warning(
+                    "Not setting up Matrix logging - requires user access token to be set"
+                )
             else:
-                matrix_logging_room = self._get_cfg(["logging", "matrix_logging", "room"], required=True)
+                matrix_logging_room = self._get_cfg(
+                    ["logging", "matrix_logging", "room"], required=True
+                )
                 handler = matrix.Handler(
                     homeserver_url=self.homeserver_url,
                     access_token=self.user_token,
@@ -97,14 +126,24 @@ class Config(object):
         # Permissions
         self.admins = self._get_cfg(["permissions", "admins"], default=[])
         for admin in self.admins:
-            if not re.match(re.compile(RoomRegex), admin) and not re.match(re.compile(UserIdRegex), admin):
+            if not re.match(re.compile(RoomRegex), admin) and not re.match(
+                re.compile(UserIdRegex), admin
+            ):
                 raise ConfigError(f"Admin {admin} does not look like a user or room")
         self.coordinators = self._get_cfg(["permissions", "coordinators"], default=[])
         for coordinator in self.admins:
-            if not re.match(re.compile(RoomRegex), coordinator) and not re.match(re.compile(UserIdRegex), coordinator):
-                raise ConfigError(f"Coordinator {coordinator} does not look like a user or room")
-        self.permissions_demote_users = self._get_cfg(["permissions", "demote_users"], default=False, required=False)
-        self.permissions_promote_users = self._get_cfg(["permissions", "promote_users"], default=True, required=False)
+            if not re.match(re.compile(RoomRegex), coordinator) and not re.match(
+                re.compile(UserIdRegex), coordinator
+            ):
+                raise ConfigError(
+                    f"Coordinator {coordinator} does not look like a user or room"
+                )
+        self.permissions_demote_users = self._get_cfg(
+            ["permissions", "demote_users"], default=False, required=False
+        )
+        self.permissions_promote_users = self._get_cfg(
+            ["permissions", "promote_users"], default=True, required=False
+        )
 
         # Rooms
         self.rooms = self._get_cfg(["rooms"], default={}, required=False)
@@ -114,7 +153,9 @@ class Config(object):
 
         # Keycloak
         self.keycloak = self._get_cfg(["users", "keycloak"], default={}, required=False)
-        self.keycloak_signup = self._get_cfg(["users", "keycloak", "keycloak_signup"], default={}, required=False)
+        self.keycloak_signup = self._get_cfg(
+            ["users", "keycloak", "keycloak_signup"], default={}, required=False
+        )
 
         # Email
         self.email = self._get_cfg(["email"], default={}, required=False)
@@ -122,10 +163,10 @@ class Config(object):
             raise ConfigError("Cannot enable both starttls and ssl for email")
 
     def _get_cfg(
-            self,
-            path: List[str],
-            default: Any = None,
-            required: bool = True,
+        self,
+        path: List[str],
+        default: Any = None,
+        required: bool = True,
     ) -> Any:
         """Get a config option from a path and option name, specifying whether it is
         required.

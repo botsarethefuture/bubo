@@ -25,7 +25,9 @@ def get_request_headers(config):
     }
 
 
-async def get_users_for_access(client: AsyncClient, config: Config, access_type: str) -> Set:
+async def get_users_for_access(
+    client: AsyncClient, config: Config, access_type: str
+) -> Set:
     if access_type == "admins":
         existing_list = list(set(config.admins[:]))
     elif access_type == "coordinators":
@@ -37,12 +39,18 @@ async def get_users_for_access(client: AsyncClient, config: Config, access_type:
     for room_id in existing_list:
         if not room_id.startswith("!"):
             continue
-        response = await with_ratelimit(client=client, method="joined_members", room_id=room_id)
+        response = await with_ratelimit(
+            client=client, method="joined_members", room_id=room_id
+        )
         if isinstance(response, JoinedMembersResponse):
-            logger.debug(f"Found {len(response.members)} users for {access_type} access type in room {room_id}")
+            logger.debug(
+                f"Found {len(response.members)} users for {access_type} access type in room {room_id}"
+            )
             users.extend([member.user_id for member in response.members])
         else:
-            logger.warning(f"Failed to get list of users for access from room {room_id}: {response.message}")
+            logger.warning(
+                f"Failed to get list of users for access from room {room_id}: {response.message}"
+            )
     return set(users)
 
 

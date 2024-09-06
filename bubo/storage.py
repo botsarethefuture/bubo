@@ -6,6 +6,7 @@ from importlib import import_module
 from typing import Optional, List
 
 import sqlite3
+
 # noinspection PyPackageRequirements
 from nio import MegolmEvent
 
@@ -40,12 +41,16 @@ class Storage(object):
 
         # Create database_version table if it doesn't exist
         try:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 CREATE TABLE database_version (version INTEGER)
-            """)
-            self.cursor.execute("""
+            """
+            )
+            self.cursor.execute(
+                """
                 insert into database_version (version) values (0)
-            """)
+            """
+            )
             self.conn.commit()
         except sqlite3.OperationalError:
             pass
@@ -69,46 +74,66 @@ class Storage(object):
             migration.forward(self.cursor)
             logger.info(f"Executing database migration {version_string}")
             # noinspection SqlWithoutWhere
-            self.cursor.execute("update database_version set version = ?", (version_string,))
+            self.cursor.execute(
+                "update database_version set version = ?", (version_string,)
+            )
             self.conn.commit()
             logger.info(f"...done")
 
     def delete_recreate_room(self, room_id: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             delete from recreate_rooms where room_id = ?;
-        """, (room_id,))
+        """,
+            (room_id,),
+        )
         self.conn.commit()
 
     def get_breakout_room_id(self, event_id: str):
-        results = self.cursor.execute("""
+        results = self.cursor.execute(
+            """
             select room_id from breakout_rooms where event_id = ?;
-        """, (event_id,))
+        """,
+            (event_id,),
+        )
         room = results.fetchone()
         if room:
             return room[0]
 
     def get_encrypted_events(self, session_id: str):
-        results = self.cursor.execute("""
+        results = self.cursor.execute(
+            """
             select * from encrypted_events where session_id = ?;
-        """, (session_id,))
+        """,
+            (session_id,),
+        )
         return results.fetchall()
 
     def get_recreate_room(self, room_id: str):
-        results = self.cursor.execute("""
+        results = self.cursor.execute(
+            """
             select requester, timestamp, applied from recreate_rooms where room_id = ?;
-        """, (room_id,))
+        """,
+            (room_id,),
+        )
         return results.fetchone()
 
     def get_room(self, room_id: str) -> Optional[str]:
-        results = self.cursor.execute("""
+        results = self.cursor.execute(
+            """
             select * from rooms where room_id = ?
-        """, (room_id,))
+        """,
+            (room_id,),
+        )
         return results.fetchone()
 
     def get_room_id(self, alias: str) -> Optional[str]:
-        results = self.cursor.execute("""
+        results = self.cursor.execute(
+            """
             select room_id from rooms where alias = ?
-        """, (alias.split(":")[0].strip("#"),))
+        """,
+            (alias.split(":")[0].strip("#"),),
+        )
         room = results.fetchone()
         if room:
             return room[0]
@@ -121,63 +146,95 @@ class Storage(object):
         return results.fetchall()
 
     def remove_encrypted_event(self, event_id: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             delete from encrypted_events where event_id = ?;
-        """, (event_id,))
+        """,
+            (event_id,),
+        )
         self.conn.commit()
 
     def set_recreate_room_applied(self, room_id: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             update recreate_rooms set applied = 1 where room_id = ?; 
-        """, (room_id,))
+        """,
+            (room_id,),
+        )
         self.conn.commit()
 
     def set_room_id(self, alias: str, room_id: str) -> None:
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             update rooms set room_id = ? where alias = ?;
-        """, (room_id, alias.split(":")[0].strip("#")))
+        """,
+            (room_id, alias.split(":")[0].strip("#")),
+        )
         self.conn.commit()
 
     def store_breakout_room(self, event_id: str, room_id: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             insert into breakout_rooms
                 (event_id, room_id) values 
                 (?, ?);
-        """, (event_id, room_id))
+        """,
+            (event_id, room_id),
+        )
         self.conn.commit()
 
     def store_community(self, name: str, alias: str, title: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             insert into communities
                 (name, alias, title) values 
                 (?, ?, ?);
-        """, (name, alias, title))
+        """,
+            (name, alias, title),
+        )
         self.conn.commit()
 
     def store_encrypted_event(self, event: MegolmEvent):
         try:
             event_dict = asdict(event)
             event_json = json.dumps(event_dict)
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 insert into encrypted_events
                     (device_id, event_id, room_id, session_id, event) values
                     (?, ?, ?, ?, ?)
-            """, (event.device_id, event.event_id, event.room_id, event.session_id, event_json))
+            """,
+                (
+                    event.device_id,
+                    event.event_id,
+                    event.room_id,
+                    event.session_id,
+                    event_json,
+                ),
+            )
             self.conn.commit()
         except Exception as ex:
-            logger.error("Failed to store encrypted event %s: %s" % (event.event_id, ex))
+            logger.error(
+                "Failed to store encrypted event %s: %s" % (event.event_id, ex)
+            )
 
     def store_recreate_room(self, requester: str, room_id: str):
         timestamp = int(time.time())
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             insert into recreate_rooms
                 (requester, room_id, timestamp) values 
                 (?, ?, ?);
-        """, (requester, room_id, timestamp))
+        """,
+            (requester, room_id, timestamp),
+        )
         self.conn.commit()
 
     def unlink_room(self, room_id: str):
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             delete from rooms where room_id = ?
-        """, (room_id,))
+        """,
+            (room_id,),
+        )
         self.conn.commit()

@@ -15,12 +15,15 @@ API_PREFIX_V2 = "/_synapse/admin/v2"
 
 
 async def get_temporary_user_token(
-    config: Config, session: aiohttp.ClientSession, headers: Dict, user: str,
+    config: Config,
+    session: aiohttp.ClientSession,
+    headers: Dict,
+    user: str,
 ) -> Optional[str]:
     async with session.post(
         f"{config.homeserver_url}{API_PREFIX_V1}/users/{user}/login",
         json={
-            "valid_until_ms": (int(time.time()) + 60*15) * 1000,  # 15 minutes
+            "valid_until_ms": (int(time.time()) + 60 * 15) * 1000,  # 15 minutes
         },
         headers=headers,
     ) as response:
@@ -32,7 +35,9 @@ async def get_temporary_user_token(
             data = await response.json()
             return data["access_token"]
         except Exception as ex:
-            logger.warning("Failed to get temporary access token for user %s: %s", user, ex)
+            logger.warning(
+                "Failed to get temporary access token for user %s: %s", user, ex
+            )
             return
 
 
@@ -51,7 +56,11 @@ async def get_temporary_user_tokens(config: Config, users: List[str]) -> Dict:
 
 
 async def join_user(
-    config: Config, headers: Dict, room_id_or_alias: str, session: aiohttp.ClientSession, user: str,
+    config: Config,
+    headers: Dict,
+    room_id_or_alias: str,
+    session: aiohttp.ClientSession,
+    user: str,
 ) -> bool:
     async with session.post(
         f"{config.homeserver_url}{API_PREFIX_V1}/join/{room_id_or_alias}",

@@ -1,5 +1,6 @@
 def forward(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE communities_backup (
             id INTEGER PRIMARY KEY,
             name text,
@@ -8,15 +9,21 @@ def forward(cursor):
             icon text default '',
             description text default ''
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         INSERT INTO communities_backup SELECT id, name, alias, title, icon, description 
             FROM communities
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         DROP TABLE communities
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE TABLE communities (
             id INTEGER PRIMARY KEY autoincrement,
             name text,
@@ -25,11 +32,16 @@ def forward(cursor):
             icon text default '',
             description text default ''
         )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         INSERT INTO communities SELECT id, name, alias, title, icon, description 
             FROM communities_backup
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         DROP TABLE communities_backup
-    """)
+    """
+    )
