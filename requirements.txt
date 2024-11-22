@@ -1,6 +1,6 @@
 aiofiles==24.1.0
 aiohappyeyeballs==2.4.0
-aiohttp==3.10.5
+aiohttp==3.11.7
 aiohttp-socks==0.8.4
 aiolog @ git+https://github.com/jaywink/aiolog.git@0db27c59a1694857f58c2bae6874fb25c6c6f262
 aiosignal==1.3.1
